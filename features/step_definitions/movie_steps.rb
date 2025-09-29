@@ -39,9 +39,9 @@ end
 World(MovieStepHelpers)
 
 Given(/the following movies exist/) do |movies_table|
-  Movie.destroy_all
   movies_table.hashes.each do |movie|
-    Movie.create!(movie)
+    record = Movie.where(title: movie['title']).first_or_initialize
+    record.update!(movie)
   end
 end
 
