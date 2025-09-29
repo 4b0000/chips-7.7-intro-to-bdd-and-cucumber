@@ -1,5 +1,43 @@
 # Add a declarative step here for populating the DB with movies.
 
+module MovieStepHelpers
+  def values_from_list(list_argument, table_argument)
+    entries = if table_argument
+                if table_argument.respond_to?(:headers) && table_argument.headers&.any?
+                  table_argument.hashes.flat_map(&:values)
+                else
+                  table_argument.raw.flatten
+                end
+              else
+                list_argument.to_s.split(/\s*,\s*/)
+              end
+
+    entries.map { |entry| entry.to_s.strip }.reject(&:empty?)
+  end
+
+  def apply_checkbox_action(action, entries)
+    entries.each do |entry|
+      step %{I #{action} "#{entry}" checkbox}
+    end
+  end
+
+  def negated?(token)
+    token.to_s.strip == 'not'
+  end
+
+  def assert_movie_visibility(movie_titles, negate)
+    movie_titles.each do |title|
+      if negate
+        step %{I should not see "#{title}"}
+      else
+        step %{I should see "#{title}"}
+      end
+    end
+  end
+end
+
+World(MovieStepHelpers)
+
 Given(/the following movies exist/) do |movies_table|
   Movie.destroy_all
   movies_table.hashes.each do |movie|
@@ -14,7 +52,7 @@ end
 # Make sure that one string (regexp) occurs before or after another one
 #   on the same page
 
-Then(/^I should see "(.*)" before "(.*)"$/) do |first_title, second_title|
+Then(/^I should see "(.*)" before "(.*)"(?: in the movie list)?$/) do |first_title, second_title|
   movies_section = find('#movies')
   page_text = movies_section.text
   first_index = page_text.index(first_title)
@@ -30,30 +68,43 @@ end
 # Make it easier to express checking or unchecking several boxes at once
 #  "When I check only the following ratings: PG, G, R"
 
-When(/I check the following ratings: (.*)/) do |rating_list|
-  # HINT: use String#split to split up the rating_list, then
-  #   iterate over the ratings and reuse the "When I check..." or
-  #   "When I uncheck..." steps in lines 89-95 of web_steps.rb
-  rating_list.split(/\s*,\s*/).each do |rating|
-    step %{I check "#{rating}" checkbox}
-  end
+Given(/^I check the following ratings: (.*)$/) do |rating_list|
+  apply_checkbox_action('check', values_from_list(rating_list, nil))
 end
 
-Then(/^I should (not )?see the following movies: (.*)$/) do |no, movie_list|
-  # Take a look at web_steps.rb Then /^(?:|I )should see "([^"]*)"$/
-  movie_list.split(/\s*,\s*/).each do |movie|
-    if no
-      step %{I should not see "#{movie}"}
-    else
-      step %{I should see "#{movie}"}
-    end
-  end
+Given(/^I check the following ratings:$/) do |ratings_table|
+  apply_checkbox_action('check', values_from_list(nil, ratings_table))
+end
+
+Given(/^I uncheck the following ratings: (.*)$/) do |rating_list|
+  apply_checkbox_action('uncheck', values_from_list(rating_list, nil))
+end
+
+Given(/^I uncheck the following ratings:$/) do |ratings_table|
+  apply_checkbox_action('uncheck', values_from_list(nil, ratings_table))
+end
+
+Then(/^I should (not )?see the following movies: (.*)$/) do |negate, movie_list|
+  assert_movie_visibility(values_from_list(movie_list, nil), negated?(negate))
+end
+
+Then(/^I should (not )?see the following movies:$/) do |negate, movies_table|
+  assert_movie_visibility(values_from_list(nil, movies_table), negated?(negate))
 end
 
 Then(/^I should see all the movies$/) do
   # Make sure that all the movies in the app are visible in the table
   within('#movies') do
-    expect(page).to have_css('div[id^="movie_"]', count: Movie.count)
+    table_rows = all('table tbody tr').to_a
+    table_rows = all('table tr').to_a.drop(1) if table_rows.empty? && has_css?('table tr')
+
+    row_count = if table_rows.any?
+                  table_rows.length
+                else
+                  all(:css, 'div[id^="movie_"]').size
+                end
+
+    expect(row_count).to eq(Movie.count)
   end
 end
 

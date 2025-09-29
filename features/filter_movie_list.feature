@@ -23,18 +23,48 @@ Background: movies have been added to database
   Then 10 seed movies should exist
 
 Scenario: restrict to movies with "PG" or "R" ratings
-  When I uncheck "G" checkbox
-  And I uncheck "PG-13" checkbox
-  And I check the following ratings: PG, R
+  When I uncheck the following ratings:
+    | rating |
+    | G      |
+    | PG-13  |
+  And I check the following ratings:
+    | rating |
+    | PG     |
+    | R      |
   And I press "Refresh"
-  Then I should see the following movies: The Terminator, When Harry Met Sally, Amelie, The Incredibles, Raiders of the Lost Ark
-  And I should not see the following movies: Aladdin, The Help, Chocolat, 2001: A Space Odyssey, Chicken Run
+  Then I should see the following movies:
+    | title                   |
+    | The Terminator          |
+    | When Harry Met Sally    |
+    | Amelie                  |
+    | The Incredibles         |
+    | Raiders of the Lost Ark |
+  And I should not see the following movies:
+    | title                 |
+    | Aladdin               |
+    | The Help              |
+    | Chocolat              |
+    | 2001: A Space Odyssey |
+    | Chicken Run           |
 
 Scenario: all ratings selected
-  When I uncheck "PG" checkbox
-  And I uncheck "R" checkbox
+  When I uncheck the following ratings:
+    | rating |
+    | PG     |
+    | R      |
   And I press "Refresh"
-  Then I should not see the following movies: The Terminator, When Harry Met Sally, Amelie, The Incredibles, Raiders of the Lost Ark
-  When I check the following ratings: G, PG, PG-13, R
+  Then I should not see the following movies:
+    | title                |
+    | The Terminator       |
+    | When Harry Met Sally |
+    | Amelie               |
+    | The Incredibles      |
+    | Raiders of the Lost Ark |
+  When I check the following ratings:
+    | rating |
+    | G      |
+    | PG     |
+    | PG-13  |
+    | R      |
   And I press "Refresh"
   Then I should see all the movies
