@@ -68,20 +68,36 @@ end
 # Make it easier to express checking or unchecking several boxes at once
 #  "When I check only the following ratings: PG, G, R"
 
-Given(/^I check the following ratings: (.*)$/) do |rating_list|
+When(/I check the following ratings: (.*)/) do |rating_list|
   apply_checkbox_action('check', values_from_list(rating_list, nil))
 end
 
-Given(/^I check the following ratings:$/) do |ratings_table|
+When(/I check the following ratings:/) do |ratings_table|
   apply_checkbox_action('check', values_from_list(nil, ratings_table))
 end
 
-Given(/^I uncheck the following ratings: (.*)$/) do |rating_list|
+When(/I uncheck the following ratings: (.*)/) do |rating_list|
   apply_checkbox_action('uncheck', values_from_list(rating_list, nil))
 end
 
-Given(/^I uncheck the following ratings:$/) do |ratings_table|
+When(/I uncheck the following ratings:/) do |ratings_table|
   apply_checkbox_action('uncheck', values_from_list(nil, ratings_table))
+end
+
+Given(/^I check the following ratings: (.*)$/) do |rating_list|
+  step %{I check the following ratings: #{rating_list}}
+end
+
+Given(/^I check the following ratings:$/) do |ratings_table|
+  step %{I check the following ratings:}, ratings_table
+end
+
+Given(/^I uncheck the following ratings: (.*)$/) do |rating_list|
+  step %{I uncheck the following ratings: #{rating_list}}
+end
+
+Given(/^I uncheck the following ratings:$/) do |ratings_table|
+  step %{I uncheck the following ratings:}, ratings_table
 end
 
 Then(/^I should (not )?see the following movies: (.*)$/) do |negate, movie_list|
