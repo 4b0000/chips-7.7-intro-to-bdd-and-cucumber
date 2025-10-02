@@ -1,5 +1,11 @@
 # Add a declarative step here for populating the DB with movies.
 
+unless defined?(ApplicationRecord)
+  class ApplicationRecord < ActiveRecord::Base
+    self.abstract_class = true
+  end
+end
+
 module MovieStepHelpers
   def values_from_list(list_argument, table_argument)
     entries = if table_argument
